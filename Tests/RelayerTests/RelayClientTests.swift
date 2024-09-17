@@ -29,10 +29,10 @@ final class RelayClientTests: XCTestCase {
         let topic = "0987"
         let message = "qwerty"
         let subscriptionId = "sub-id"
-        let subscription = Subscription(id: subscriptionId, topic: topic, message: message)
+        let subscription = Subscription(id: subscriptionId, topic: topic, message: message, attestation: nil)
         let request = subscription.asRPCRequest()
 
-        sut.messagePublisher.sink { (subscriptionTopic, subscriptionMessage, _) in
+        sut.messagePublisher.sink { (subscriptionTopic, subscriptionMessage, _, _) in
             XCTAssertEqual(subscriptionMessage, message)
             XCTAssertEqual(subscriptionTopic, topic)
             expectation.fulfill()
@@ -44,12 +44,6 @@ final class RelayClientTests: XCTestCase {
 
     func testSubscribeRequest() async {
         try? await sut.subscribe(topic: "")
-        let request = dispatcher.getLastRequestSent()
-        XCTAssertNotNil(request)
-    }
-
-    func testPublishRequest() async {
-        try? await sut.publish(topic: "", payload: "{}", tag: 0, prompt: false, ttl: 60)
         let request = dispatcher.getLastRequestSent()
         XCTAssertNotNil(request)
     }
@@ -68,18 +62,13 @@ final class RelayClientTests: XCTestCase {
         let expectation = expectation(description: "Duplicate Subscription requests must notify only the first time")
         let request = Subscription.init(id: "sub_id", topic: "topic", message: "message").asRPCRequest()
         
-        sut.messagePublisher.sink { (_, _, _) in
+        sut.messagePublisher.sink { (_, _, _, _) in
             expectation.fulfill()
         }.store(in: &publishers)
 
         dispatcher.onMessage?(try! request.asJSONEncodedString())
         dispatcher.onMessage?(try! request.asJSONEncodedString())
         waitForExpectations(timeout: 0.1, handler: nil)
-    }
-
-    func testSendOnPublish() async {
-        try? await sut.publish(topic: "", payload: "", tag: 0, prompt: false, ttl: 60)
-        XCTAssertTrue(dispatcher.sent)
     }
 
     func testSendOnSubscribe() async {

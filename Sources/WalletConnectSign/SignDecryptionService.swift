@@ -21,7 +21,7 @@ public class SignDecryptionService {
     }
 
     public func decryptProposal(topic: String, ciphertext: String) throws -> Session.Proposal {
-        let (rpcRequest, _, _): (RPCRequest, String?, Data) = try serializer.deserialize(topic: topic, encodedEnvelope: ciphertext)
+        let (rpcRequest, _, _): (RPCRequest, String?, Data) = try serializer.deserialize(topic: topic, codingType: .base64Encoded, envelopeString: ciphertext)
         if let proposal = try rpcRequest.params?.get(SessionType.ProposeParams.self) {
             return proposal.publicRepresentation(pairingTopic: topic)
         } else {
@@ -30,7 +30,7 @@ public class SignDecryptionService {
     }
 
     public func decryptRequest(topic: String, ciphertext: String) throws -> Request {
-        let (rpcRequest, _, _): (RPCRequest, String?, Data) = try serializer.deserialize(topic: topic, encodedEnvelope: ciphertext)
+        let (rpcRequest, _, _): (RPCRequest, String?, Data) = try serializer.deserialize(topic: topic, codingType: .base64Encoded, envelopeString: ciphertext)
         if let request = try rpcRequest.params?.get(SessionType.RequestParams.self),
            let rpcId = rpcRequest.id{
             let request = Request(
@@ -49,8 +49,7 @@ public class SignDecryptionService {
     }
 
     public func decryptAuthRequest(topic: String, ciphertext: String) throws -> AuthenticationRequest {
-        let (rpcRequest, _, _): (RPCRequest, String?, Data) = try serializer.deserialize(topic: topic, encodedEnvelope: ciphertext)
-        setPairingMetadata(rpcRequest: rpcRequest, topic: topic)
+        let (rpcRequest, _, _): (RPCRequest, String?, Data) = try serializer.deserialize(topic: topic, codingType: .base64Encoded, envelopeString: ciphertext)
         if let params = try rpcRequest.params?.get(SessionAuthenticateRequestParams.self),
            let id = rpcRequest.id {
             let authRequest = AuthenticationRequest(id: id, topic: topic, payload: params.authPayload, requester: params.requester.metadata)
@@ -62,15 +61,5 @@ public class SignDecryptionService {
 
     public func getMetadata(topic: String) -> AppMetadata? {
         sessionStorage.getSession(forTopic: topic)?.peerParticipant.metadata
-    }
-
-    private func setPairingMetadata(rpcRequest: RPCRequest, topic: String) {
-        guard var pairing = pairingStorage.getPairing(forTopic: topic),
-              pairing.peerMetadata == nil,
-              let peerMetadata = try? rpcRequest.params?.get(SessionAuthenticateRequestParams.self).requester.metadata
-        else { return }
-
-        pairing.updatePeerMetadata(peerMetadata)
-        pairingStorage.setPairing(pairing)
     }
 }

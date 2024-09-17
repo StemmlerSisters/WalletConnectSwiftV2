@@ -17,7 +17,7 @@ final class ModalSheetInteractorMock: ModalSheetInteractor {
         (1, wallets)
     }
     
-    func createPairingAndConnect() async throws -> WalletConnectURI? {
+    func createPairingAndConnect() async throws -> WalletConnectURI {
         .init(topic: "foo", symKey: "bar", relay: .init(protocol: "irn", data: nil), expiryTimestamp: 1706001526)
     }
     
@@ -30,11 +30,11 @@ final class ModalSheetInteractorMock: ModalSheetInteractor {
         let sessionProposal = Session.Proposal(
             id: "",
             pairingTopic: "",
-            proposer: AppMetadata(name: "", description: "", url: "", icons: [], redirect: AppMetadata.Redirect(native: "", universal: nil)),
+            proposer: AppMetadata(name: "", description: "", url: "", icons: [], redirect: try! AppMetadata.Redirect(native: "", universal: nil)),
             requiredNamespaces: [:],
             optionalNamespaces: nil,
             sessionProperties: nil,
-            proposal: SessionProposal(relays: [], proposer: Participant(publicKey: "", metadata: AppMetadata(name: "", description: "", url: "", icons: [], redirect: AppMetadata.Redirect(native: "", universal: nil))), requiredNamespaces: [:], optionalNamespaces: [:], sessionProperties: [:])
+            proposal: SessionProposal(relays: [], proposer: Participant(publicKey: "", metadata: try! AppMetadata(name: "", description: "", url: "", icons: [], redirect: AppMetadata.Redirect(native: "", universal: nil))), requiredNamespaces: [:], optionalNamespaces: [:], sessionProperties: [:])
         )
         
         return Result.Publisher((sessionProposal, SignReasonCode.userRejectedChains))

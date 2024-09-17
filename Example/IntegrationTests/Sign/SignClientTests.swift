@@ -14,12 +14,17 @@ final class SignClientTests: XCTestCase {
     var dappPairingClient: PairingClient!
     var wallet: SignClient!
     var walletPairingClient: PairingClient!
+    var dappKeyValueStorage: RuntimeKeyValueStorage!
+    var dappRelayClient: RelayClient!
+    var walletRelayClient: RelayClient!
     private var publishers = Set<AnyCancellable>()
     let walletAccount = Account(chainIdentifier: "eip155:1", address: "0x724d0D2DaD3fbB0C168f947B87Fa5DBe36F1A8bf")!
     let prvKey = Data(hex: "462c1dad6832d7d96ccf87bd6a686a4110e114aaaebd5512e552c0e3a87b480f")
     let eip1271Signature = "0xdeaddeaddead4095116db01baaf276361efd3a73c28cf8cc28dabefa945b8d536011289ac0a3b048600c1e692ff173ca944246cf7ceb319ac2262d27b395c82b1c"
+    let walletLinkModeUniversalLink = "https://test"
 
-    static private func makeClients(name: String) -> (PairingClient, SignClient) {
+
+    static private func makeClients(name: String, linkModeUniversalLink: String? = "https://x.com", supportLinkMode: Bool = false) -> (PairingClient, SignClient, RuntimeKeyValueStorage, RelayClient) {
         let logger = ConsoleLogger(prefix: name, loggingLevel: .debug)
         let keychain = KeychainStorageMock()
         let keyValueStorage = RuntimeKeyValueStorage()
@@ -43,10 +48,13 @@ final class SignClientTests: XCTestCase {
             logger: logger,
             keyValueStorage: keyValueStorage,
             keychainStorage: keychain,
-            networkingClient: networkingClient
+            networkingClient: networkingClient,
+            eventsClient: MockEventsClient()
         )
+        let metadata = AppMetadata(name: name, description: "", url: "", icons: [""], redirect: try! AppMetadata.Redirect(native: "", universal: linkModeUniversalLink, linkMode: supportLinkMode))
+
         let client = SignClientFactory.create(
-            metadata: AppMetadata(name: name, description: "", url: "", icons: [""], redirect: AppMetadata.Redirect(native: "", universal: nil)),
+            metadata: metadata,
             logger: logger,
             keyValueStorage: keyValueStorage,
             keychainStorage: keychain,
@@ -54,18 +62,25 @@ final class SignClientTests: XCTestCase {
             networkingClient: networkingClient,
             iatProvider: IATProviderMock(),
             projectId: InputConfig.projectId,
-            crypto: DefaultCryptoProvider()
+            crypto: DefaultCryptoProvider(),
+            eventsClient: MockEventsClient()
         )
 
         let clientId = try! networkingClient.getClientId()
         logger.debug("My client id is: \(clientId)")
         
-        return (pairingClient, client)
+        return (pairingClient, client, keyValueStorage, relayClient)
     }
 
     override func setUp() async throws {
-        (dappPairingClient, dapp) = Self.makeClients(name: "🍏Dapp")
-        (walletPairingClient, wallet) = Self.makeClients(name: "🍎Wallet")
+        (dappPairingClient, dapp, dappKeyValueStorage, dappRelayClient) = Self.makeClients(name: "🍏Dapp")
+        (walletPairingClient, wallet, _, walletRelayClient) = Self.makeClients(name: "🍎Wallet", linkModeUniversalLink: walletLinkModeUniversalLink)
+    }
+
+    func setUpDappForLinkMode() async throws {
+        try await tearDown()
+        (dappPairingClient, dapp, dappKeyValueStorage, dappRelayClient) = Self.makeClients(name: "🍏Dapp", supportLinkMode: true)
+        (walletPairingClient, wallet, _, walletRelayClient) = Self.makeClients(name: "🍎Wallet", linkModeUniversalLink: walletLinkModeUniversalLink, supportLinkMode: true)
     }
 
     override func tearDown() {
@@ -95,8 +110,7 @@ final class SignClientTests: XCTestCase {
             walletSettlementExpectation.fulfill()
         }.store(in: &publishers)
 
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, topic: uri.topic)
+        let uri = try! await dapp.connect(requiredNamespaces: requiredNamespaces)
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [dappSettlementExpectation, walletSettlementExpectation], timeout: InputConfig.defaultTimeout)
     }
@@ -109,8 +123,7 @@ final class SignClientTests: XCTestCase {
         let store = Store()
         let semaphore = DispatchSemaphore(value: 0)
 
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, topic: uri.topic)
+        let uri = try! await dapp.connect(requiredNamespaces: requiredNamespaces)
         try await walletPairingClient.pair(uri: uri)
 
         wallet.sessionProposalPublisher.sink { [unowned self] (proposal, _) in
@@ -149,8 +162,7 @@ final class SignClientTests: XCTestCase {
             sessionDeleteExpectation.fulfill()
         }.store(in: &publishers)
 
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, topic: uri.topic)
+        let uri = try! await dapp.connect(requiredNamespaces: requiredNamespaces)
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [sessionDeleteExpectation], timeout: InputConfig.defaultTimeout)
     }
@@ -179,8 +191,8 @@ final class SignClientTests: XCTestCase {
             expectation.fulfill()
         }.store(in: &publishers)
 
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, topic: uri.topic)
+        let uri = try! await dapp.connect(requiredNamespaces: requiredNamespaces)
+
         try await walletPairingClient.pair(uri: uri)
 
         await fulfillment(of: [expectation], timeout: InputConfig.defaultTimeout)
@@ -232,8 +244,8 @@ final class SignClientTests: XCTestCase {
             responseExpectation.fulfill()
         }.store(in: &publishers)
 
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, topic: uri.topic)
+        let uri = try! await dapp.connect(requiredNamespaces: requiredNamespaces)
+
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [requestExpectation, responseExpectation], timeout: InputConfig.defaultTimeout)
     }
@@ -277,48 +289,10 @@ final class SignClientTests: XCTestCase {
             expectation.fulfill()
         }.store(in: &publishers)
 
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, topic: uri.topic)
+        let uri = try! await dapp.connect(requiredNamespaces: requiredNamespaces)
+
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [expectation], timeout: InputConfig.defaultTimeout)
-    }
-
-    func testNewSessionOnExistingPairing() async throws {
-        let dappSettlementExpectation = expectation(description: "Dapp settles session")
-        dappSettlementExpectation.expectedFulfillmentCount = 2
-        let walletSettlementExpectation = expectation(description: "Wallet settles session")
-        walletSettlementExpectation.expectedFulfillmentCount = 2
-        let requiredNamespaces = ProposalNamespace.stubRequired()
-        let sessionNamespaces = SessionNamespace.make(toRespond: requiredNamespaces)
-        var initiatedSecondSession = false
-
-        wallet.sessionProposalPublisher.sink { [unowned self] (proposal, _) in
-            Task(priority: .high) {
-                do {
-                    _ = try await wallet.approve(proposalId: proposal.id, namespaces: sessionNamespaces)
-                } catch {
-                    XCTFail("\(error)")
-                }
-            }
-        }.store(in: &publishers)
-        dapp.sessionSettlePublisher.sink { [unowned self] _ in
-            dappSettlementExpectation.fulfill()
-            let pairingTopic = dappPairingClient.getPairings().first!.topic
-            if !initiatedSecondSession {
-                Task(priority: .high) {
-                    _ = try! await dapp.connect(requiredNamespaces: requiredNamespaces, topic: pairingTopic)
-                }
-                initiatedSecondSession = true
-            }
-        }.store(in: &publishers)
-        wallet.sessionSettlePublisher.sink { _ in
-            walletSettlementExpectation.fulfill()
-        }.store(in: &publishers)
-
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, topic: uri.topic)
-        try await walletPairingClient.pair(uri: uri)
-        await fulfillment(of: [dappSettlementExpectation, walletSettlementExpectation], timeout: InputConfig.defaultTimeout)
     }
 
     func testSuccessfulSessionUpdateNamespaces() async throws {
@@ -343,8 +317,8 @@ final class SignClientTests: XCTestCase {
             XCTAssertEqual(namespace.values.first?.accounts.count, 2)
             expectation.fulfill()
         }.store(in: &publishers)
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, topic: uri.topic)
+        let uri = try! await dapp.connect(requiredNamespaces: requiredNamespaces)
+
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [expectation], timeout: InputConfig.defaultTimeout)
     }
@@ -371,8 +345,8 @@ final class SignClientTests: XCTestCase {
             }
         }.store(in: &publishers)
 
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, topic: uri.topic)
+        let uri = try! await dapp.connect(requiredNamespaces: requiredNamespaces)
+
         try await walletPairingClient.pair(uri: uri)
 
         await fulfillment(of: [expectation], timeout: InputConfig.defaultTimeout)
@@ -402,8 +376,8 @@ final class SignClientTests: XCTestCase {
             }
         }.store(in: &publishers)
 
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, topic: uri.topic)
+        let uri = try! await dapp.connect(requiredNamespaces: requiredNamespaces)
+
         try await walletPairingClient.pair(uri: uri)
 
         await fulfillment(of: [expectation], timeout: InputConfig.defaultTimeout)
@@ -430,8 +404,8 @@ final class SignClientTests: XCTestCase {
             }
         }.store(in: &publishers)
 
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, topic: uri.topic)
+        let uri = try! await dapp.connect(requiredNamespaces: requiredNamespaces)
+
         try await walletPairingClient.pair(uri: uri)
 
         await fulfillment(of: [expectation], timeout: InputConfig.defaultTimeout)
@@ -472,7 +446,7 @@ final class SignClientTests: XCTestCase {
             requiredNamespaces: requiredNamespaces,
             optionalNamespaces: optionalNamespaces,
             sessionProperties: nil,
-            proposal: SessionProposal(relays: [], proposer: Participant(publicKey: "", metadata: AppMetadata(name: "", description: "", url: "", icons: [], redirect: AppMetadata.Redirect(native: "", universal: nil))), requiredNamespaces: [:], optionalNamespaces: [:], sessionProperties: [:])
+            proposal: SessionProposal(relays: [], proposer: Participant(publicKey: "", metadata: AppMetadata.stub()), requiredNamespaces: [:], optionalNamespaces: [:], sessionProperties: [:])
         )
         
         let sessionNamespaces = try AutoNamespaces.build(
@@ -509,8 +483,7 @@ final class SignClientTests: XCTestCase {
             walletSettlementExpectation.fulfill()
         }.store(in: &publishers)
 
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, optionalNamespaces: optionalNamespaces, topic: uri.topic)
+        let uri = try! await dapp.connect(requiredNamespaces: requiredNamespaces, optionalNamespaces: optionalNamespaces)
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [dappSettlementExpectation, walletSettlementExpectation], timeout: InputConfig.defaultTimeout)
     }
@@ -541,11 +514,11 @@ final class SignClientTests: XCTestCase {
         let sessionProposal = Session.Proposal(
             id: "",
             pairingTopic: "",
-            proposer: AppMetadata(name: "", description: "", url: "", icons: [], redirect: AppMetadata.Redirect(native: "", universal: nil)),
+            proposer: AppMetadata.stub(),
             requiredNamespaces: requiredNamespaces,
             optionalNamespaces: optionalNamespaces,
             sessionProperties: nil,
-            proposal: SessionProposal(relays: [], proposer: Participant(publicKey: "", metadata: AppMetadata(name: "", description: "", url: "", icons: [], redirect: AppMetadata.Redirect(native: "", universal: nil))), requiredNamespaces: [:], optionalNamespaces: [:], sessionProperties: [:])
+            proposal: SessionProposal(relays: [], proposer: Participant(publicKey: "", metadata: AppMetadata.stub()), requiredNamespaces: [:], optionalNamespaces: [:], sessionProperties: [:])
         )
         
         let sessionNamespaces = try AutoNamespaces.build(
@@ -578,8 +551,8 @@ final class SignClientTests: XCTestCase {
             walletSettlementExpectation.fulfill()
         }.store(in: &publishers)
 
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, optionalNamespaces: optionalNamespaces, topic: uri.topic)
+        let uri = try! await dapp.connect(requiredNamespaces: requiredNamespaces, optionalNamespaces: optionalNamespaces)
+
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [dappSettlementExpectation, walletSettlementExpectation], timeout: InputConfig.defaultTimeout)
     }
@@ -600,11 +573,11 @@ final class SignClientTests: XCTestCase {
         let sessionProposal = Session.Proposal(
             id: "",
             pairingTopic: "",
-            proposer: AppMetadata(name: "", description: "", url: "", icons: [], redirect: AppMetadata.Redirect(native: "", universal: nil)),
+            proposer: AppMetadata.stub(),
             requiredNamespaces: requiredNamespaces,
             optionalNamespaces: optionalNamespaces,
             sessionProperties: nil,
-            proposal: SessionProposal(relays: [], proposer: Participant(publicKey: "", metadata: AppMetadata(name: "", description: "", url: "", icons: [], redirect: AppMetadata.Redirect(native: "", universal: nil))), requiredNamespaces: [:], optionalNamespaces: [:], sessionProperties: [:])
+            proposal: SessionProposal(relays: [], proposer: Participant(publicKey: "", metadata: AppMetadata.stub()), requiredNamespaces: [:], optionalNamespaces: [:], sessionProperties: [:])
         )
         
         let sessionNamespaces = try AutoNamespaces.build(
@@ -637,8 +610,8 @@ final class SignClientTests: XCTestCase {
             walletSettlementExpectation.fulfill()
         }.store(in: &publishers)
 
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, optionalNamespaces: optionalNamespaces, topic: uri.topic)
+        let uri = try! await dapp.connect(requiredNamespaces: requiredNamespaces, optionalNamespaces: optionalNamespaces)
+
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [dappSettlementExpectation, walletSettlementExpectation], timeout: InputConfig.defaultTimeout)
     }
@@ -667,11 +640,11 @@ final class SignClientTests: XCTestCase {
         let sessionProposal = Session.Proposal(
             id: "",
             pairingTopic: "",
-            proposer: AppMetadata(name: "", description: "", url: "", icons: [], redirect: AppMetadata.Redirect(native: "", universal: nil)),
+            proposer: AppMetadata.stub(),
             requiredNamespaces: requiredNamespaces,
             optionalNamespaces: optionalNamespaces,
             sessionProperties: nil,
-            proposal: SessionProposal(relays: [], proposer: Participant(publicKey: "", metadata: AppMetadata(name: "", description: "", url: "", icons: [], redirect: AppMetadata.Redirect(native: "", universal: nil))), requiredNamespaces: [:], optionalNamespaces: [:], sessionProperties: [:])
+            proposal: SessionProposal(relays: [], proposer: Participant(publicKey: "", metadata: AppMetadata.stub()), requiredNamespaces: [:], optionalNamespaces: [:], sessionProperties: [:])
         )
         
         do {
@@ -700,8 +673,8 @@ final class SignClientTests: XCTestCase {
             settlementFailedExpectation.fulfill()
         }
         
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, optionalNamespaces: optionalNamespaces, topic: uri.topic)
+        let uri = try! await dapp.connect(requiredNamespaces: requiredNamespaces, optionalNamespaces: optionalNamespaces)
+
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [settlementFailedExpectation], timeout: InputConfig.defaultTimeout)
     }
@@ -731,11 +704,11 @@ final class SignClientTests: XCTestCase {
         let sessionProposal = Session.Proposal(
             id: "",
             pairingTopic: "",
-            proposer: AppMetadata(name: "", description: "", url: "", icons: [], redirect: AppMetadata.Redirect(native: "", universal: nil)),
+            proposer: AppMetadata.stub(),
             requiredNamespaces: requiredNamespaces,
             optionalNamespaces: optionalNamespaces,
             sessionProperties: nil,
-            proposal: SessionProposal(relays: [], proposer: Participant(publicKey: "", metadata: AppMetadata(name: "", description: "", url: "", icons: [], redirect: AppMetadata.Redirect(native: "", universal: nil))), requiredNamespaces: [:], optionalNamespaces: [:], sessionProperties: [:])
+            proposal: SessionProposal(relays: [], proposer: Participant(publicKey: "", metadata: AppMetadata.stub()), requiredNamespaces: [:], optionalNamespaces: [:], sessionProperties: [:])
         )
         
         do {
@@ -766,8 +739,8 @@ final class SignClientTests: XCTestCase {
             settlementFailedExpectation.fulfill()
         }
 
-        let uri = try! await dappPairingClient.create()
-        try await dapp.connect(requiredNamespaces: requiredNamespaces, optionalNamespaces: optionalNamespaces, topic: uri.topic)
+        let uri = try! await dapp.connect(requiredNamespaces: requiredNamespaces, optionalNamespaces: optionalNamespaces)
+
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [settlementFailedExpectation], timeout: 1)
     }
@@ -803,7 +776,7 @@ final class SignClientTests: XCTestCase {
         .store(in: &publishers)
 
 
-        let uri = try await dapp.authenticate(AuthRequestParams.stub())
+        let uri = try await dapp.authenticate(AuthRequestParams.stub())!
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [responseExpectation], timeout: InputConfig.defaultTimeout)
     }
@@ -838,7 +811,7 @@ final class SignClientTests: XCTestCase {
         .store(in: &publishers)
 
 
-        let uri = try await dapp.authenticate(AuthRequestParams.stub(methods: nil))
+        let uri = try await dapp.authenticate(AuthRequestParams.stub(methods: nil))!
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [responseExpectation], timeout: InputConfig.defaultTimeout)
     }
@@ -885,7 +858,7 @@ final class SignClientTests: XCTestCase {
         .store(in: &publishers)
 
 
-        let uri = try await dapp.authenticate(AuthRequestParams.stub(chains: ["eip155:1", "eip155:137"]))
+        let uri = try await dapp.authenticate(AuthRequestParams.stub(chains: ["eip155:1", "eip155:137"]))!
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [responseExpectation], timeout: InputConfig.defaultTimeout)
     }
@@ -907,7 +880,7 @@ final class SignClientTests: XCTestCase {
             requestId: nil,
             resources: nil,
             methods: nil
-        ))
+        ))!
 
         try await walletPairingClient.pair(uri: uri)
 
@@ -929,7 +902,7 @@ final class SignClientTests: XCTestCase {
 
     func testEIP191SessionAuthenticateSignatureVerificationFailed() async {
         let requestExpectation = expectation(description: "error response delivered")
-        let uri = try! await dapp.authenticate(AuthRequestParams.stub())
+        let uri = try! await dapp.authenticate(AuthRequestParams.stub())!
 
         try? await walletPairingClient.pair(uri: uri)
         wallet.authenticateRequestPublisher.sink { [unowned self] (request, _) in
@@ -951,7 +924,7 @@ final class SignClientTests: XCTestCase {
 
     func testSessionAuthenticateUserRespondError() async {
         let responseExpectation = expectation(description: "error response delivered")
-        let uri = try! await dapp.authenticate(AuthRequestParams.stub())
+        let uri = try! await dapp.authenticate(AuthRequestParams.stub())!
 
         try? await walletPairingClient.pair(uri: uri)
         wallet.authenticateRequestPublisher.sink { [unowned self] request in
@@ -1003,7 +976,7 @@ final class SignClientTests: XCTestCase {
             guard case .success(let (session, _)) = result,
                 let session = session else { XCTFail(); return }
             Task(priority: .high) {
-                let request = try Request(id: RPCID(0), topic: session.topic, method: requestMethod, params: requestParams, chainId: chain)
+                let request = try Request(id: RPCID(0), topic: session.topic, method: requestMethod, params: requestParams, chainId: Blockchain("eip155:1")!)
                 try await dapp.request(params: request)
             }
         }
@@ -1030,7 +1003,7 @@ final class SignClientTests: XCTestCase {
         }.store(in: &publishers)
 
 
-        let uri = try await dapp.authenticate(AuthRequestParams.stub())
+        let uri = try await dapp.authenticate(AuthRequestParams.stub())!
 
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [requestExpectation, responseExpectation], timeout: InputConfig.defaultTimeout)
@@ -1099,7 +1072,7 @@ final class SignClientTests: XCTestCase {
         }.store(in: &publishers)
 
 
-        let uri = try await dapp.authenticate(AuthRequestParams.stub(chains: ["eip155:1", "eip155:137"]))
+        let uri = try await dapp.authenticate(AuthRequestParams.stub(chains: ["eip155:1", "eip155:137"]))!
 
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [requestExpectation, responseExpectation], timeout: InputConfig.defaultTimeout)
@@ -1124,7 +1097,7 @@ final class SignClientTests: XCTestCase {
             }
         }.store(in: &publishers)
 
-        let uri = try await dapp.authenticate(AuthRequestParams.stub())
+        let uri = try await dapp.authenticate(AuthRequestParams.stub())!
         let uriStringWithoutMethods = uri.absoluteString.replacingOccurrences(of: "&methods=wc_sessionAuthenticate", with: "")
         let uriWithoutMethods = try WalletConnectURI(uriString: uriStringWithoutMethods)
         try await walletPairingClient.pair(uri: uriWithoutMethods)
@@ -1133,6 +1106,7 @@ final class SignClientTests: XCTestCase {
 
 
     func testFallbackToSessionProposeIfWalletIsNotSubscribingSessionAuthenticate()  async throws {
+        
         let responseExpectation = expectation(description: "successful response delivered")
 
         let requiredNamespaces = ProposalNamespace.stubRequired()
@@ -1150,9 +1124,258 @@ final class SignClientTests: XCTestCase {
             }
         }.store(in: &publishers)
 
-        let uri = try await dapp.authenticate(AuthRequestParams.stub())
+        let uri = try await dapp.authenticate(AuthRequestParams.stub())!
         try await walletPairingClient.pair(uri: uri)
         await fulfillment(of: [responseExpectation], timeout: InputConfig.defaultTimeout)
+    }
+
+    // Link Mode
+
+    func testLinkAuthRequest() async throws {
+        try await setUpDappForLinkMode()
+        dappRelayClient.blockPublishing = true
+        walletRelayClient.blockPublishing = true
+
+        let responseExpectation = expectation(description: "successful response delivered")
+
+        // Set Wallet's universal link in dapp storage to mock wallet proof on link mode support
+        let walletUniversalLink = "https://test"
+        let dappLinkModeLinksStore = CodableStore<Bool>(defaults: dappKeyValueStorage, identifier: SignStorageIdentifiers.linkModeLinks.rawValue)
+        dappLinkModeLinksStore.set(true, forKey: walletUniversalLink)
+
+        wallet.authenticateRequestPublisher.sink { [unowned self] (request, _) in
+            Task(priority: .high) {
+                let signerFactory = DefaultSignerFactory()
+                let signer = MessageSignerFactory(signerFactory: signerFactory).create()
+
+                let supportedAuthPayload = try! wallet.buildAuthPayload(payload: request.payload, supportedEVMChains: [Blockchain("eip155:1")!, Blockchain("eip155:137")!], supportedMethods: ["eth_signTransaction", "personal_sign"])
+
+                let siweMessage = try! wallet.formatAuthMessage(payload: supportedAuthPayload, account: walletAccount)
+
+                let signature = try signer.sign(
+                    message: siweMessage,
+                    privateKey: prvKey,
+                    type: .eip191)
+
+                let auth = try wallet.buildSignedAuthObject(authPayload: supportedAuthPayload, signature: signature, account: walletAccount)
+
+                let (_, approveEnvelope) = try! await wallet.approveSessionAuthenticateLinkMode(requestId: request.id, auths: [auth])
+                try dapp.dispatchEnvelope(approveEnvelope)
+            }
+        }
+        .store(in: &publishers)
+        dapp.authResponsePublisher.sink { (_, result) in
+            guard case .success = result else { XCTFail(); return }
+            responseExpectation.fulfill()
+        }
+        .store(in: &publishers)
+
+
+        let requestEnvelope = try await dapp.authenticateLinkMode(AuthRequestParams.stub(), walletUniversalLink: walletUniversalLink)
+        try wallet.dispatchEnvelope(requestEnvelope)
+        await fulfillment(of: [responseExpectation], timeout: InputConfig.defaultTimeout)
+    }
+
+    func testLinkSessionRequest() async throws {
+        try await setUpDappForLinkMode()
+        dappRelayClient.blockPublishing = true
+        walletRelayClient.blockPublishing = true
+        let requestExpectation = expectation(description: "Wallet expects to receive a request")
+        let responseExpectation = expectation(description: "Dapp expects to receive a response")
+
+        let requestMethod = "personal_sign"
+        let requestParams = [EthSendTransaction.stub()]
+        let responseParams = "0xdeadbeef"
+
+        let semaphore = DispatchSemaphore(value: 0)
+
+        // Set Wallet's universal link in dapp storage to mock wallet proof on link mode support
+        let walletUniversalLink = "https://test"
+        let dappLinkModeLinksStore = CodableStore<Bool>(defaults: dappKeyValueStorage, identifier: SignStorageIdentifiers.linkModeLinks.rawValue)
+        dappLinkModeLinksStore.set(true, forKey: walletUniversalLink)
+
+        wallet.authenticateRequestPublisher.sink { [unowned self] (request, _) in
+            Task(priority: .high) {
+                let signerFactory = DefaultSignerFactory()
+                let signer = MessageSignerFactory(signerFactory: signerFactory).create()
+
+                let supportedAuthPayload = try! wallet.buildAuthPayload(payload: request.payload, supportedEVMChains: [Blockchain("eip155:1")!, Blockchain("eip155:137")!], supportedMethods: ["eth_signTransaction", "personal_sign"])
+
+                let siweMessage = try! wallet.formatAuthMessage(payload: supportedAuthPayload, account: walletAccount)
+
+                let signature = try signer.sign(
+                    message: siweMessage,
+                    privateKey: prvKey,
+                    type: .eip191)
+
+                let auth = try wallet.buildSignedAuthObject(authPayload: supportedAuthPayload, signature: signature, account: walletAccount)
+
+                let (_, approveEnvelope) = try! await wallet.approveSessionAuthenticateLinkMode(requestId: request.id, auths: [auth])
+                try dapp.dispatchEnvelope(approveEnvelope)
+                semaphore.signal()
+            }
+        }
+        .store(in: &publishers)
+        dapp.authResponsePublisher.sink { [unowned self] (_, result) in
+            semaphore.wait()
+            guard case .success(let (session, _)) = result,
+                let session = session else { XCTFail(); return }
+            Task(priority: .high) {
+                let request = try! Request(id: RPCID(0), topic: session.topic, method: requestMethod, params: requestParams, chainId: Blockchain("eip155:1")!)
+                let requestEnvelope = try! await dapp.requestLinkMode(params: request)!
+                try! wallet.dispatchEnvelope(requestEnvelope)
+                semaphore.signal()
+            }
+        }
+        .store(in: &publishers)
+
+        wallet.sessionRequestPublisher.sink { [unowned self] (sessionRequest, _) in
+            semaphore.wait()
+            let receivedParams = try! sessionRequest.params.get([EthSendTransaction].self)
+            XCTAssertEqual(receivedParams, requestParams)
+            XCTAssertEqual(sessionRequest.method, requestMethod)
+            requestExpectation.fulfill()
+            Task(priority: .high) {
+                let envelope = try! await wallet.respondLinkMode(topic: sessionRequest.topic, requestId: sessionRequest.id, response: .response(AnyCodable(responseParams)))!
+                try! dapp.dispatchEnvelope(envelope)
+            }
+            semaphore.signal()
+        }.store(in: &publishers)
+
+        dapp.sessionResponsePublisher.sink { response in
+            semaphore.wait()
+            switch response.result {
+            case .response(let response):
+                XCTAssertEqual(try! response.get(String.self), responseParams)
+            case .error:
+                XCTFail()
+            }
+            responseExpectation.fulfill()
+        }.store(in: &publishers)
+
+        let requestEnvelope = try await dapp.authenticateLinkMode(AuthRequestParams.stub(), walletUniversalLink: walletUniversalLink)
+        try wallet.dispatchEnvelope(requestEnvelope)
+        
+        await fulfillment(of: [requestExpectation, responseExpectation], timeout: InputConfig.defaultTimeout)
+    }
+
+    func testLinkModeFailsWhenDappDoesNotHaveProofThatWalletSupportsLinkMode() async throws {
+        // ensure link mode fails before the upgrade
+        do {
+            try await self.dapp.authenticateLinkMode(AuthRequestParams.stub(), walletUniversalLink: self.walletLinkModeUniversalLink)
+            XCTFail("Expected error but got success.")
+        } catch {
+            if let authError = error as? LinkAuthRequester.Errors, authError == .walletLinkSupportNotProven {
+            } else {
+                XCTFail("Unexpected error: \(error)")
+            }
+        }
+    }
+
+    func testUpgradeFromRelayToLinkMode() async throws {
+        try await setUpDappForLinkMode()
+
+        let linkModeUpgradeExpectation = expectation(description: "successful upgraded to link mode")
+        wallet.authenticateRequestPublisher.sink { [unowned self] (request, _) in
+            Task(priority: .high) {
+                let signerFactory = DefaultSignerFactory()
+                let signer = MessageSignerFactory(signerFactory: signerFactory).create()
+
+                let supportedAuthPayload = try! wallet.buildAuthPayload(payload: request.payload, supportedEVMChains: [Blockchain("eip155:1")!, Blockchain("eip155:137")!], supportedMethods: ["eth_signTransaction", "personal_sign"])
+
+                let siweMessage = try! wallet.formatAuthMessage(payload: supportedAuthPayload, account: walletAccount)
+
+                let signature = try signer.sign(
+                    message: siweMessage,
+                    privateKey: prvKey,
+                    type: .eip191)
+
+                let auth = try wallet.buildSignedAuthObject(authPayload: supportedAuthPayload, signature: signature, account: walletAccount)
+
+                _ = try! await wallet.approveSessionAuthenticate(requestId: request.id, auths: [auth])
+                walletRelayClient.blockPublishing = true
+            }
+        }
+        .store(in: &publishers)
+        dapp.authResponsePublisher.sink { [unowned self] (_, result) in
+            dappRelayClient.blockPublishing = true
+            guard case .success = result else { XCTFail(); return }
+
+
+            Task { [unowned self] in
+                try! await self.dapp.authenticateLinkMode(AuthRequestParams.stub(), walletUniversalLink: self.walletLinkModeUniversalLink)
+                linkModeUpgradeExpectation.fulfill()
+            }
+        }
+        .store(in: &publishers)
+
+
+        let uri = try await dapp.authenticate(AuthRequestParams.stub(), walletUniversalLink: walletLinkModeUniversalLink)!
+        try await walletPairingClient.pair(uri: uri)
+        await fulfillment(of: [linkModeUpgradeExpectation], timeout: InputConfig.defaultTimeout)
+    }
+
+    func testUpgradeSessionToLinkModeAndSendRequestOverLinkMode() async throws {
+
+        try await setUpDappForLinkMode()
+        let requestMethod = "personal_sign"
+        let requestParams = [EthSendTransaction.stub()]
+        let sessionResponseOnLinkModeExpectation = expectation(description: "Dapp expects to receive a response")
+
+        let responseParams = "0xdeadbeef"
+        let semaphore = DispatchSemaphore(value: 0)
+
+        wallet.authenticateRequestPublisher.sink { [unowned self] (request, _) in
+
+            Task(priority: .high) {
+                let signerFactory = DefaultSignerFactory()
+                let signer = MessageSignerFactory(signerFactory: signerFactory).create()
+
+                let supportedAuthPayload = try! wallet.buildAuthPayload(payload: request.payload, supportedEVMChains: [Blockchain("eip155:1")!, Blockchain("eip155:137")!], supportedMethods: ["eth_signTransaction", "personal_sign"])
+
+                let siweMessage = try! wallet.formatAuthMessage(payload: supportedAuthPayload, account: walletAccount)
+
+                let signature = try signer.sign(
+                    message: siweMessage,
+                    privateKey: prvKey,
+                    type: .eip191)
+
+                let auth = try wallet.buildSignedAuthObject(authPayload: supportedAuthPayload, signature: signature, account: walletAccount)
+
+                _ = try! await wallet.approveSessionAuthenticate(requestId: request.id, auths: [auth])
+                semaphore.signal()
+            }
+        }
+        .store(in: &publishers)
+        dapp.authResponsePublisher.sink { [unowned self] (_, result) in
+            semaphore.wait()
+            dappRelayClient.blockPublishing = true
+            walletRelayClient.blockPublishing = true
+            guard case .success(let (session, _)) = result,
+                let session = session else { XCTFail(); return }
+
+            Task { [unowned self] in
+                let request = try! Request(id: RPCID(0), topic: session.topic, method: requestMethod, params: requestParams, chainId: Blockchain("eip155:1")!)
+                let requestEnvelope = try! await self.dapp.requestLinkMode(params: request)!
+                try! self.wallet.dispatchEnvelope(requestEnvelope)
+            }
+        }
+        .store(in: &publishers)
+
+        wallet.sessionRequestPublisher.sink { [unowned self] (sessionRequest, _) in
+            Task(priority: .high) {
+                let envelope = try! await wallet.respondLinkMode(topic: sessionRequest.topic, requestId: sessionRequest.id, response: .response(AnyCodable(responseParams)))!
+                try! dapp.dispatchEnvelope(envelope)
+            }
+        }.store(in: &publishers)
+
+        dapp.sessionResponsePublisher.sink { response in
+            sessionResponseOnLinkModeExpectation.fulfill()
+        }.store(in: &publishers)
+
+        let uri = try await dapp.authenticate(AuthRequestParams.stub(), walletUniversalLink: walletLinkModeUniversalLink)!
+        try await walletPairingClient.pair(uri: uri)
+        await fulfillment(of: [sessionResponseOnLinkModeExpectation], timeout: InputConfig.defaultTimeout)
     }
 
 }

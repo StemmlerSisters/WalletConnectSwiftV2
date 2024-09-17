@@ -36,7 +36,7 @@ class AuthRequestSubscriber {
     }
 
     private func subscribeForRequest() {
-        pairingRegisterer.register(method: SessionAuthenticatedProtocolMethod())
+        pairingRegisterer.register(method: SessionAuthenticatedProtocolMethod.responseApprove())
             .sink { [unowned self] (payload: RequestSubscriptionPayload<SessionAuthenticateRequestParams>) in
 
                 guard !payload.request.isExpired() else {
@@ -54,14 +54,20 @@ class AuthRequestSubscriber {
                 let request = AuthenticationRequest(id: payload.id, topic: payload.topic, payload: payload.request.authPayload, requester: payload.request.requester.metadata)
 
                 Task(priority: .high) {
-                    let assertionId = payload.decryptedPayload.sha256().toHexString()
                     do {
-                        let response = try await verifyClient.verifyOrigin(assertionId: assertionId)
-                        let verifyContext = verifyClient.createVerifyContext(origin: response.origin, domain: payload.request.authPayload.domain, isScam: response.isScam)
+                        let response: VerifyResponse
+                        if let attestation = payload.attestation,
+                           let messageId = payload.encryptedMessage.data(using: .utf8)?.sha256().toHexString() {
+                            response = try await verifyClient.verify(.v2(attestationJWT: attestation, messageId: messageId))
+                        } else {
+                            let assertionId = payload.decryptedPayload.sha256().toHexString()
+                            response = try await verifyClient.verify(.v1(assertionId: assertionId))
+                        }
+                        let verifyContext = verifyClient.createVerifyContext(origin: response.origin, domain: payload.request.authPayload.domain, isScam: response.isScam, isVerified: response.isVerified)
                         verifyContextStore.set(verifyContext, forKey: request.id.string)
                         onRequest?((request, verifyContext))
                     } catch {
-                        let verifyContext = verifyClient.createVerifyContext(origin: nil, domain: payload.request.authPayload.domain, isScam: nil)
+                        let verifyContext = verifyClient.createVerifyContext(origin: nil, domain: payload.request.authPayload.domain, isScam: nil, isVerified: nil)
                         verifyContextStore.set(verifyContext, forKey: request.id.string)
                         onRequest?((request, verifyContext))
                         return
@@ -70,10 +76,15 @@ class AuthRequestSubscriber {
             }.store(in: &publishers)
     }
 
-    func respondError(payload: SubscriptionPayload, reason: SignReasonCode) {
+    private func respondError(payload: SubscriptionPayload, reason: SignReasonCode) {
         Task(priority: .high) {
             do {
-                try await networkingInteractor.respondError(topic: payload.topic, requestId: payload.id, protocolMethod: SessionAuthenticatedProtocolMethod(), reason: reason)
+                try await networkingInteractor.respondError(
+                    topic: payload.topic,
+                    requestId: payload.id,
+                    protocolMethod: SessionAuthenticatedProtocolMethod.responseAutoReject(),
+                    reason: reason
+                )
             } catch {
                 logger.error("Respond Error failed with: \(error.localizedDescription)")
             }

@@ -42,15 +42,24 @@ final class RelayClientEndToEndTests: XCTestCase {
             projectId: InputConfig.projectId,
             socketAuthenticator: socketAuthenticator
         )
-        let socket = WebSocket(url: urlFactory.create(fallback: false))
+        let socket = WebSocket(url: urlFactory.create())
         let webSocketFactory = WebSocketFactoryMock(webSocket: socket)
         let networkMonitor = NetworkMonitor()
+
+        let relayUrlFactory = RelayUrlFactory(
+            relayHost: "relay.walletconnect.com",
+            projectId: "1012db890cf3cfb0c1cdc929add657ba",
+            socketAuthenticator: socketAuthenticator
+        )
+
+        let socketConnectionHandler = AutomaticSocketConnectionHandler(socket: socket, logger: logger)
         let dispatcher = Dispatcher(
             socketFactory: webSocketFactory,
             relayUrlFactory: urlFactory,
             networkMonitor: networkMonitor,
-            socketConnectionType: .manual,
-            logger: logger
+            socket: socket,
+            logger: logger,
+            socketConnectionHandler: socketConnectionHandler
         )
         let keychain = KeychainStorageMock()
         let relayClient = RelayClientFactory.create(
@@ -106,12 +115,12 @@ final class RelayClientEndToEndTests: XCTestCase {
         expectationA.assertForOverFulfill = false
         expectationB.assertForOverFulfill = false
 
-        relayA.messagePublisher.sink { topic, payload, _ in
+        relayA.messagePublisher.sink { topic, payload, _, _ in
             (subscriptionATopic, subscriptionAPayload) = (topic, payload)
             expectationA.fulfill()
         }.store(in: &publishers)
 
-        relayB.messagePublisher.sink { topic, payload, _ in
+        relayB.messagePublisher.sink { topic, payload, _, _ in
             (subscriptionBTopic, subscriptionBPayload) = (topic, payload)
             Task(priority: .high) {
                 sleep(1)

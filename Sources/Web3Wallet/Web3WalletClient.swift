@@ -177,9 +177,8 @@ public class Web3WalletClient {
         try await pairingClient.pair(uri: uri)
     }
 
-    public func disconnectPairing(topic: String) async throws {
-        try await pairingClient.disconnect(topic: topic)
-    }
+    @available(*, deprecated, message: "This method is deprecated. Pairing will disconnect automatically")
+    public func disconnectPairing(topic: String) async {}
     
     /// For a wallet and a dApp to terminate a session
     ///
@@ -242,6 +241,10 @@ public class Web3WalletClient {
 
     public func buildAuthPayload(payload: AuthPayload, supportedEVMChains: [Blockchain], supportedMethods: [String]) throws -> AuthPayload {
         try signClient.buildAuthPayload(payload: payload, supportedEVMChains: supportedEVMChains, supportedMethods: supportedMethods)
+    }
+
+    public func dispatchEnvelope(_ envelope: String) throws {
+        try signClient.dispatchEnvelope(envelope)
     }
 
     public func register(deviceToken: Data, enableEncrypted: Bool = false) async throws {

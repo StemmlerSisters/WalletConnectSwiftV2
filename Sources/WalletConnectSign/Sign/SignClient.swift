@@ -7,7 +7,7 @@ import Combine
 ///
 /// Access via `Sign.instance`
 public final class SignClient: SignClientProtocol {
-    
+
     enum Errors: Error {
         case sessionForTopicNotFound
     }
@@ -147,7 +147,6 @@ public final class SignClient: SignClientProtocol {
     private let sessionEngine: SessionEngine
     private let approveEngine: ApproveEngine
     private let disconnectService: DisconnectService
-    private let pairingPingService: PairingPingService
     private let sessionPingService: SessionPingService
     private let nonControllerSessionStateMachine: NonControllerSessionStateMachine
     private let controllerSessionStateMachine: ControllerSessionStateMachine
@@ -166,7 +165,7 @@ public final class SignClient: SignClientProtocol {
     private let appRequestService: SessionAuthRequestService
     private let authResposeSubscriber: AuthResponseSubscriber
     private let authRequestSubscriber: AuthRequestSubscriber
-    private let authResponder: AuthResponder
+    private let approveSessionAuthenticateDispatcher: ApproveSessionAuthenticateDispatcher
     private let authResponseTopicResubscriptionService: AuthResponseTopicResubscriptionService
 
     private let sessionProposalPublisherSubject = PassthroughSubject<(proposal: Session.Proposal, context: VerifyContext?), Never>()
@@ -182,6 +181,18 @@ public final class SignClient: SignClientProtocol {
     private let sessionsPublisherSubject = PassthroughSubject<[Session], Never>()
     private var authRequestPublisherSubject = PassthroughSubject<(request: AuthenticationRequest, context: VerifyContext?), Never>()
     private let authRequestSubscribersTracking: AuthRequestSubscribersTracking
+    private let authenticateTransportTypeSwitcher: AuthenticateTransportTypeSwitcher
+
+
+    // Link Mode
+    private let linkAuthRequester: LinkAuthRequester
+    private let linkAuthRequestSubscriber: LinkAuthRequestSubscriber
+    private let linkEnvelopesDispatcher: LinkEnvelopesDispatcher
+    private let sessionRequestDispatcher: SessionRequestDispatcher
+    private let linkSessionRequestSubscriber: LinkSessionRequestSubscriber
+    private let sessionResponderDispatcher: SessionResponderDispatcher
+    private let linkSessionRequestResponseSubscriber: LinkSessionRequestResponseSubscriber
+    private let messageVerifier: MessageVerifier
 
     private var publishers = Set<AnyCancellable>()
 
@@ -191,7 +202,6 @@ public final class SignClient: SignClientProtocol {
          networkingClient: NetworkingInteractor,
          sessionEngine: SessionEngine,
          approveEngine: ApproveEngine,
-         pairingPingService: PairingPingService,
          sessionPingService: SessionPingService,
          nonControllerSessionStateMachine: NonControllerSessionStateMachine,
          controllerSessionStateMachine: ControllerSessionStateMachine,
@@ -206,19 +216,27 @@ public final class SignClient: SignClientProtocol {
          appRequestService: SessionAuthRequestService,
          appRespondSubscriber: AuthResponseSubscriber,
          authRequestSubscriber: AuthRequestSubscriber,
-         authResponder: AuthResponder,
+         approveSessionAuthenticateDispatcher: ApproveSessionAuthenticateDispatcher,
          pendingRequestsProvider: PendingRequestsProvider,
          proposalExpiryWatcher: ProposalExpiryWatcher,
          pendingProposalsProvider: PendingProposalsProvider,
          requestsExpiryWatcher: RequestsExpiryWatcher,
          authResponseTopicResubscriptionService: AuthResponseTopicResubscriptionService,
-         authRequestSubscribersTracking: AuthRequestSubscribersTracking
+         authRequestSubscribersTracking: AuthRequestSubscribersTracking,
+         linkAuthRequester: LinkAuthRequester,
+         linkAuthRequestSubscriber: LinkAuthRequestSubscriber,
+         linkEnvelopesDispatcher: LinkEnvelopesDispatcher,
+         sessionRequestDispatcher: SessionRequestDispatcher,
+         linkSessionRequestSubscriber: LinkSessionRequestSubscriber,
+         sessionResponderDispatcher: SessionResponderDispatcher,
+         linkSessionRequestResponseSubscriber: LinkSessionRequestResponseSubscriber,
+         authenticateTransportTypeSwitcher: AuthenticateTransportTypeSwitcher,
+         messageVerifier: MessageVerifier
     ) {
         self.logger = logger
         self.networkingClient = networkingClient
         self.sessionEngine = sessionEngine
         self.approveEngine = approveEngine
-        self.pairingPingService = pairingPingService
         self.sessionPingService = sessionPingService
         self.nonControllerSessionStateMachine = nonControllerSessionStateMachine
         self.controllerSessionStateMachine = controllerSessionStateMachine
@@ -232,7 +250,7 @@ public final class SignClient: SignClientProtocol {
         self.pairingClient = pairingClient
         self.appRequestService = appRequestService
         self.authRequestSubscriber = authRequestSubscriber
-        self.authResponder = authResponder
+        self.approveSessionAuthenticateDispatcher = approveSessionAuthenticateDispatcher
         self.authResposeSubscriber = appRespondSubscriber
         self.pendingRequestsProvider = pendingRequestsProvider
         self.proposalExpiryWatcher = proposalExpiryWatcher
@@ -240,6 +258,15 @@ public final class SignClient: SignClientProtocol {
         self.requestsExpiryWatcher = requestsExpiryWatcher
         self.authResponseTopicResubscriptionService = authResponseTopicResubscriptionService
         self.authRequestSubscribersTracking = authRequestSubscribersTracking
+        self.linkAuthRequester = linkAuthRequester
+        self.linkAuthRequestSubscriber = linkAuthRequestSubscriber
+        self.linkEnvelopesDispatcher = linkEnvelopesDispatcher
+        self.sessionRequestDispatcher = sessionRequestDispatcher
+        self.linkSessionRequestSubscriber = linkSessionRequestSubscriber
+        self.sessionResponderDispatcher = sessionResponderDispatcher
+        self.linkSessionRequestResponseSubscriber = linkSessionRequestResponseSubscriber
+        self.authenticateTransportTypeSwitcher = authenticateTransportTypeSwitcher
+        self.messageVerifier = messageVerifier
 
         setUpConnectionObserving()
         setUpEnginesCallbacks()
@@ -269,68 +296,28 @@ public final class SignClient: SignClientProtocol {
         return pairingURI
     }
 
-    /// For a dApp to propose a session to a wallet.
-    /// Function will propose a session on existing pairing.
-    /// - Parameters:
-    ///   - requiredNamespaces: required namespaces for a session
-    ///   - topic: pairing topic
-    public func connect(
-        requiredNamespaces: [String: ProposalNamespace],
-        optionalNamespaces: [String: ProposalNamespace]? = nil,
-        sessionProperties: [String: String]? = nil,
-        topic: String
-    ) async throws {
-        logger.debug("Connecting Application")
-        try pairingClient.validatePairingExistance(topic)
-        try await appProposeService.propose(
-            pairingTopic: topic,
-            namespaces: requiredNamespaces,
-            optionalNamespaces: optionalNamespaces,
-            sessionProperties: sessionProperties,
-            relay: RelayProtocolOptions(protocol: "irn", data: nil)
-        )
-    }
-
     //---------------------------------------AUTH-----------------------------------
 
     /// For a dApp to propose an authenticated session to a wallet.
-    /// Function will propose a session on existing pairing.
     public func authenticate(
         _ params: AuthRequestParams,
-        topic: String
-    ) async throws {
-        try pairingClient.validatePairingExistance(topic)
-        try pairingClient.validateMethodSupport(topic: topic, method: SessionAuthenticatedProtocolMethod().method)
-        logger.debug("Requesting Authentication on existing pairing")
-        try await appRequestService.request(params: params, topic: topic)
-
-        let namespaces = try ProposalNamespaceBuilder.buildNamespace(from: params)
-        try await appProposeService.propose(
-            pairingTopic: topic,
-            namespaces: [:],
-            optionalNamespaces: namespaces,
-            sessionProperties: nil,
-            relay: RelayProtocolOptions(protocol: "irn", data: nil)
-        )
+        walletUniversalLink: String? = nil
+    ) async throws -> WalletConnectURI? {
+        return try await authenticateTransportTypeSwitcher.authenticate(params, walletUniversalLink: walletUniversalLink)
     }
 
-    /// For a dApp to propose an authenticated session to a wallet.
-    public func authenticate(
-        _ params: AuthRequestParams
-    ) async throws -> WalletConnectURI {
-        let pairingURI = try await pairingClient.create(methods: [SessionAuthenticatedProtocolMethod().method])
-        logger.debug("Requesting Authentication on existing pairing")
-        try await appRequestService.request(params: params, topic: pairingURI.topic)
 
-        let namespaces = try ProposalNamespaceBuilder.buildNamespace(from: params)
-        try await appProposeService.propose(
-            pairingTopic: pairingURI.topic,
-            namespaces: [:],
-            optionalNamespaces: namespaces,
-            sessionProperties: nil,
-            relay: RelayProtocolOptions(protocol: "irn", data: nil)
-        )
-        return pairingURI
+    #if DEBUG
+    @discardableResult public func authenticateLinkMode(
+        _ params: AuthRequestParams,
+        walletUniversalLink: String
+    ) async throws -> String {
+        return try await linkAuthRequester.request(params: params, walletUniversalLink: walletUniversalLink)
+    }
+    #endif
+
+    public func dispatchEnvelope(_ envelope: String) throws {
+        try linkEnvelopesDispatcher.dispatchEnvelope(envelope)
     }
 
 
@@ -340,13 +327,22 @@ public final class SignClient: SignClientProtocol {
     ///   - requestId: authentication request id
     ///   - signature: CACAO signature of requested message
     public func approveSessionAuthenticate(requestId: RPCID, auths: [Cacao]) async throws -> Session? {
-        try await authResponder.respond(requestId: requestId, auths: auths)
+        let (session, _) = try await approveSessionAuthenticateDispatcher.approveSessionAuthenticate(requestId: requestId, auths: auths)
+        return session
     }
+
+    /// the function returns envelope for link mode testing
+    #if DEBUG
+    func approveSessionAuthenticateLinkMode(requestId: RPCID, auths: [Cacao]) async throws -> (Session?, String) {
+        let (session, envelope) = try await approveSessionAuthenticateDispatcher.approveSessionAuthenticate(requestId: requestId, auths: auths)
+        return (session, envelope!)
+    }
+    #endif
 
     /// For wallet to reject authentication request
     /// - Parameter requestId: authentication request id
     public func rejectSession(requestId: RPCID) async throws {
-        try await authResponder.respondError(requestId: requestId)
+        try await approveSessionAuthenticateDispatcher.respondError(requestId: requestId)
     }
 
 
@@ -356,17 +352,23 @@ public final class SignClient: SignClientProtocol {
         return try pendingRequestsProvider.getPendingRequests()
     }
 
-    public func formatAuthMessage(payload: AuthPayload, account: Account) throws -> String {
-        let cacaoPayload = try CacaoPayloadBuilder.makeCacaoPayload(authPayload: payload, account: account)
-        return try SIWEFromCacaoPayloadFormatter().formatMessage(from: cacaoPayload)
-    }
-
     public func buildSignedAuthObject(authPayload: AuthPayload, signature: CacaoSignature, account: Account) throws -> AuthObject {
         try CacaosBuilder.makeCacao(authPayload: authPayload, signature: signature, account: account)
     }
 
     public func buildAuthPayload(payload: AuthPayload, supportedEVMChains: [Blockchain], supportedMethods: [String]) throws -> AuthPayload {
         try AuthPayloadBuilder.build(payload: payload, supportedEVMChains: supportedEVMChains, supportedMethods: supportedMethods)
+    }
+
+    // MARK: - SIWE
+
+    public func formatAuthMessage(payload: AuthPayload, account: Account) throws -> String {
+        let cacaoPayload = try CacaoPayloadBuilder.makeCacaoPayload(authPayload: payload, account: account)
+        return try SIWEFromCacaoPayloadFormatter().formatMessage(from: cacaoPayload)
+    }
+
+    public func verifySIWE(signature: String, message: String, address: String, chainId: String) async throws {
+        try await messageVerifier.verify(signature: signature, message: message, address: address, chainId: chainId)
     }
 
     //-----------------------------------------------------------------------------------
@@ -409,8 +411,15 @@ public final class SignClient: SignClientProtocol {
     /// - Parameters:
     ///   - params: Parameters defining request and related session
     public func request(params: Request) async throws {
-        try await sessionEngine.request(params)
+        _ = try await sessionRequestDispatcher.request(params)
     }
+
+    /// the function returns envelope for link mode testing
+#if DEBUG
+    public func requestLinkMode(params: Request) async throws -> String? {
+        return try await sessionRequestDispatcher.request(params)
+    }
+#endif
 
     /// For the wallet to respond on pending dApp's JSON-RPC request
     /// - Parameters:
@@ -418,8 +427,15 @@ public final class SignClient: SignClientProtocol {
     ///   - requestId: RPC request ID
     ///   - response: Your JSON RPC response or an error.
     public func respond(topic: String, requestId: RPCID, response: RPCResult) async throws {
-        try await sessionEngine.respondSessionRequest(topic: topic, requestId: requestId, response: response)
+        _ = try await sessionResponderDispatcher.respondSessionRequest(topic: topic, requestId: requestId, response: response)
     }
+    /// the function returns envelope for link mode testing
+
+#if DEBUG
+    public func respondLinkMode(topic: String, requestId: RPCID, response: RPCResult) async throws -> String? {
+        return try await sessionResponderDispatcher.respondSessionRequest(topic: topic, requestId: requestId, response: response)
+    }
+#endif
 
     /// Ping method allows to check if peer client is online and is subscribing for given topic
     ///
@@ -495,6 +511,10 @@ public final class SignClient: SignClientProtocol {
     }
 #endif
 
+    public func setLogging(level: LoggingLevel) {
+        logger.setLogging(level: level)
+    }
+
     // MARK: - Private
 
     private func setUpEnginesCallbacks() {
@@ -528,9 +548,6 @@ public final class SignClient: SignClientProtocol {
         sessionEngine.onSessionResponse = { [unowned self] response in
             sessionResponsePublisherSubject.send(response)
         }
-        pairingPingService.onResponse = { [unowned self] topic in
-            pingResponsePublisherSubject.send(topic)
-        }
         sessionPingService.onResponse = { [unowned self] topic in
             pingResponsePublisherSubject.send(topic)
         }
@@ -540,6 +557,12 @@ public final class SignClient: SignClientProtocol {
         authRequestSubscriber.onRequest = { [unowned self] request in
             authRequestPublisherSubject.send(request)
         }
+        linkAuthRequestSubscriber.onRequest = { [unowned self] request in
+            authRequestPublisherSubject.send(request)
+        }
+        linkSessionRequestResponseSubscriber.onSessionResponse = { [unowned self] response in
+            sessionResponsePublisherSubject.send(response)
+        }
     }
 
     private func setUpConnectionObserving() {
@@ -548,3 +571,4 @@ public final class SignClient: SignClientProtocol {
         }.store(in: &publishers)
     }
 }
+

@@ -52,7 +52,7 @@ final class SignPresenter: ObservableObject {
         }
         Web3Modal.present(from: nil)
     }
-    
+
     func connectWalletWithWCM() {
         WalletConnectModal.set(sessionParams: .init(
             requiredNamespaces: Proposal.requiredNamespaces,
@@ -108,6 +108,29 @@ final class SignPresenter: ObservableObject {
         }
     }
 
+    @MainActor
+    func connectWalletWithSessionAuthenticateLinkMode() {
+        Task {
+            do {
+                ActivityIndicatorManager.shared.start()
+                if let pairingUri = try await Sign.instance.authenticate(.stub(methods: ["personal_sign"]), walletUniversalLink: "https://lab.web3modal.com/wallet") {
+                    walletConnectUri = pairingUri
+                    ActivityIndicatorManager.shared.stop()
+                    router.presentNewPairing(walletConnectUri: walletConnectUri!)
+                }
+            } catch {
+                AlertPresenter.present(message: error.localizedDescription, type: .error)
+                ActivityIndicatorManager.shared.stop()
+            }
+        }
+    }
+
+    @MainActor
+    func openConfiguration() {
+        router.openConfig()
+    }
+
+    @MainActor
     func disconnect() {
         if let session {
             Task { @MainActor in
@@ -135,14 +158,6 @@ final class SignPresenter: ObservableObject {
 // MARK: - Private functions
 extension SignPresenter {
     private func setupInitialState() {
-        Sign.instance.sessionSettlePublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] _ in
-                self.router.dismiss()
-                self.getSession()
-            }
-            .store(in: &subscriptions)
-        
         getSession()
         
         Sign.instance.sessionDeletePublisher
@@ -161,6 +176,9 @@ extension SignPresenter {
                 case .success(let (session, _)):
                     if session == nil {
                         AlertPresenter.present(message: "Wallet Succesfully Authenticated", type: .success)
+                    } else {
+                        self.router.dismiss()
+                        self.getSession()
                     }
                     break
                 case .failure(let error):
@@ -177,18 +195,25 @@ extension SignPresenter {
             }
             .store(in: &subscriptions)
 
-        Sign.instance.sessionsPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] _ in
-                self.router.dismiss()
-                self.getSession()
-            }
-            .store(in: &subscriptions)
         Sign.instance.requestExpirationPublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in
                 Task(priority: .high) { ActivityIndicatorManager.shared.stop() }
                 AlertPresenter.present(message: "Session Request has expired", type: .warning)
+            }
+            .store(in: &subscriptions)
+
+        Web3Modal.instance.SIWEAuthenticationPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] result in
+                switch result {
+                case .success((let message, let signature)):
+                    AlertPresenter.present(message: "Authenticated with SIWE", type: .success)
+                    self.router.dismiss()
+                    self.getSession()
+                case .failure(let error):
+                    AlertPresenter.present(message: "\(error)", type: .warning)
+                }
             }
             .store(in: &subscriptions)
     }
@@ -218,10 +243,10 @@ extension SignPresenter: SceneViewModel {}
 // MARK: - Authenticate request stub
 extension AuthRequestParams {
     static func stub(
-        domain: String = "app.web3inbox",
+        domain: String = "lab.web3modal.com",
         chains: [String] = ["eip155:1", "eip155:137"],
         nonce: String = "32891756",
-        uri: String = "https://app.web3inbox.com/login",
+        uri: String = "https://lab.web3modal.com",
         nbf: String? = nil,
         exp: String? = nil,
         statement: String? = "I accept the ServiceOrg Terms of Service: https://app.web3inbox.com/tos",

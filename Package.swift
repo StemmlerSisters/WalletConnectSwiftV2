@@ -14,9 +14,6 @@ let package = Package(
             name: "WalletConnect",
             targets: ["WalletConnectSign"]),
         .library(
-            name: "WalletConnectAuth",
-            targets: ["Auth"]),
-        .library(
             name: "Web3Wallet",
             targets: ["Web3Wallet"]),
         .library(
@@ -51,13 +48,9 @@ let package = Package(
     targets: [
         .target(
             name: "WalletConnectSign",
-            dependencies: ["WalletConnectPairing", "WalletConnectVerify", "WalletConnectSigner"],
+            dependencies: ["WalletConnectPairing", "WalletConnectVerify", "WalletConnectSigner", "Events"],
             path: "Sources/WalletConnectSign",
             resources: [.process("Resources/PrivacyInfo.xcprivacy")]),
-        .target(
-            name: "Auth",
-            dependencies: ["WalletConnectPairing", "WalletConnectSigner", "WalletConnectVerify"],
-            path: "Sources/Auth"),
         .target(
             name: "Web3Wallet",
             dependencies: ["WalletConnectSign", "WalletConnectPush", "WalletConnectVerify"],
@@ -84,7 +77,7 @@ let package = Package(
             path: "Sources/WalletConnectKMS"),
         .target(
             name: "WalletConnectPairing",
-            dependencies: ["WalletConnectNetworking"],
+            dependencies: ["WalletConnectNetworking", "Events"],
             resources: [.process("Resources/PrivacyInfo.xcprivacy")]),
         .target(
             name: "WalletConnectSigner",
@@ -121,11 +114,14 @@ let package = Package(
             path: "Sources/WalletConnectRouter/Router"),
         .target(
             name: "WalletConnectVerify",
-            dependencies: ["WalletConnectUtils", "WalletConnectNetworking"],
+            dependencies: ["WalletConnectUtils", "WalletConnectNetworking", "WalletConnectJWT"],
             resources: [.process("Resources/PrivacyInfo.xcprivacy")]),
         .target(
             name: "Database",
             dependencies: ["WalletConnectUtils"]),
+        .target(
+            name: "Events",
+            dependencies: ["WalletConnectUtils", "WalletConnectNetworking"]),
         .target(
             name: "WalletConnectModal",
             dependencies: ["QRCode", "WalletConnectSign"],
@@ -169,7 +165,10 @@ let package = Package(
             dependencies: ["Commons", "TestingUtils"]),
         .testTarget(
             name: "WalletConnectModalTests",
-            dependencies: ["WalletConnectModal", "TestingUtils"])
+            dependencies: ["WalletConnectModal", "TestingUtils"]),
+        .testTarget(
+            name: "EventsTests",
+            dependencies: ["Events"]),
     ],
     swiftLanguageVersions: [.v5]
 )

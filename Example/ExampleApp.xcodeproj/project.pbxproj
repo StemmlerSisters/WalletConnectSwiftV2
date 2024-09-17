@@ -19,6 +19,14 @@
 		8448F1D427E4726F0000B866 /* WalletConnect in Frameworks */ = {isa = PBXBuildFile; productRef = 8448F1D327E4726F0000B866 /* WalletConnect */; };
 		844AD55F2B1497270062E123 /* Web3Wallet in Frameworks */ = {isa = PBXBuildFile; productRef = 844AD55E2B1497270062E123 /* Web3Wallet */; };
 		845B8D8C2934B36C0084A966 /* Account.swift in Sources */ = {isa = PBXBuildFile; fileRef = 845B8D8B2934B36C0084A966 /* Account.swift */; };
+		846E359F2C00654F00E63DF4 /* ConfigModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846E359E2C00654F00E63DF4 /* ConfigModule.swift */; };
+		846E35A22C0065AD00E63DF4 /* ConfigRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846E35A12C0065AD00E63DF4 /* ConfigRouter.swift */; };
+		846E35A42C0065B600E63DF4 /* ConfigPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846E35A32C0065B600E63DF4 /* ConfigPresenter.swift */; };
+		846E35A62C0065C100E63DF4 /* ConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846E35A52C0065C100E63DF4 /* ConfigView.swift */; };
+		846E35A82C006C5600E63DF4 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846E35A72C006C5600E63DF4 /* Constants.swift */; };
+		84733CD32C1C2A4B001B2850 /* AlertPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84AEC2502B4D42C100E27A5B /* AlertPresenter.swift */; };
+		84733CD42C1C2C24001B2850 /* ProfilingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50B6A372B06697B00162B01 /* ProfilingService.swift */; };
+		84733CD52C1C2CEB001B2850 /* InputConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C56EE25D293F56D6004840D1 /* InputConfig.swift */; };
 		847BD1D62989492500076C90 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847BD1D12989492500076C90 /* MainViewController.swift */; };
 		847BD1D82989492500076C90 /* MainModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847BD1D32989492500076C90 /* MainModule.swift */; };
 		847BD1D92989492500076C90 /* MainPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847BD1D42989492500076C90 /* MainPresenter.swift */; };
@@ -31,7 +39,6 @@
 		847BD1E8298A806800076C90 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847BD1E3298A806800076C90 /* NotificationsView.swift */; };
 		847BD1EB298A87AB00076C90 /* SubscriptionsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847BD1EA298A87AB00076C90 /* SubscriptionsViewModel.swift */; };
 		847F08012A25DBFF00B2A5A4 /* XPlatformW3WTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F08002A25DBFF00B2A5A4 /* XPlatformW3WTests.swift */; };
-		8486EDD12B4F2DC1008E53C3 /* AlertPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8486EDD02B4F2DC1008E53C3 /* AlertPresenter.swift */; };
 		8486EDD32B4F2EA6008E53C3 /* SwiftMessages in Frameworks */ = {isa = PBXBuildFile; productRef = 8486EDD22B4F2EA6008E53C3 /* SwiftMessages */; };
 		8487A9442A836C2A0003D5AF /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 8487A9432A836C2A0003D5AF /* Sentry */; };
 		8487A9462A836C3F0003D5AF /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 8487A9452A836C3F0003D5AF /* Sentry */; };
@@ -50,7 +57,6 @@
 		84CE642127981DED00142511 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84CE642027981DED00142511 /* SceneDelegate.swift */; };
 		84CE642827981DF000142511 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 84CE642727981DF000142511 /* Assets.xcassets */; };
 		84CE642B27981DF000142511 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 84CE642927981DF000142511 /* LaunchScreen.storyboard */; };
-		84CEC64628D89D6B00D081A8 /* PairingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84CEC64528D89D6B00D081A8 /* PairingTests.swift */; };
 		84D093EB2B4EA6CB005B1925 /* ActivityIndicatorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D093EA2B4EA6CB005B1925 /* ActivityIndicatorManager.swift */; };
 		84DB38F32983CDAE00BFEE37 /* PushRegisterer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DB38F22983CDAE00BFEE37 /* PushRegisterer.swift */; };
 		84E6B84A29787A8000428BAF /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E6B84929787A8000428BAF /* NotificationService.swift */; };
@@ -82,7 +88,6 @@
 		A518A98829683FB60035247E /* Web3InboxModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A518A98529683FB60035247E /* Web3InboxModule.swift */; };
 		A518A98929683FB60035247E /* Web3InboxRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A518A98629683FB60035247E /* Web3InboxRouter.swift */; };
 		A518B31428E33A6500A2CE93 /* InputConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A518B31328E33A6500A2CE93 /* InputConfig.swift */; };
-		A51AC0D928E436A3001BACF9 /* InputConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A51AC0D828E436A3001BACF9 /* InputConfig.swift */; };
 		A51AC0DF28E4379F001BACF9 /* InputConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A51AC0DE28E4379F001BACF9 /* InputConfig.swift */; };
 		A5417BBE299BFC3E00B469F3 /* ImportAccount.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5417BBD299BFC3E00B469F3 /* ImportAccount.swift */; };
 		A541959E2934BFEF0035AD19 /* CacaoSignerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A541959A2934BFEF0035AD19 /* CacaoSignerTests.swift */; };
@@ -309,7 +314,6 @@
 		C5DD5BE1294E09E3008FD3A4 /* Web3Wallet in Frameworks */ = {isa = PBXBuildFile; productRef = C5DD5BE0294E09E3008FD3A4 /* Web3Wallet */; };
 		C5F32A2C2954814200A6476E /* ConnectionDetailsModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F32A2B2954814200A6476E /* ConnectionDetailsModule.swift */; };
 		C5F32A2E2954814A00A6476E /* ConnectionDetailsRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F32A2D2954814A00A6476E /* ConnectionDetailsRouter.swift */; };
-		C5F32A302954816100A6476E /* ConnectionDetailsInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F32A2F2954816100A6476E /* ConnectionDetailsInteractor.swift */; };
 		C5F32A322954816C00A6476E /* ConnectionDetailsPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F32A312954816C00A6476E /* ConnectionDetailsPresenter.swift */; };
 		C5F32A342954817600A6476E /* ConnectionDetailsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F32A332954817600A6476E /* ConnectionDetailsView.swift */; };
 		C5F32A362954FE3C00A6476E /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C5F32A352954FE3C00A6476E /* Colors.xcassets */; };
@@ -397,6 +401,11 @@
 		845AA7D929BA1EBA00F33739 /* IntegrationTests.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = IntegrationTests.xctestplan; path = ExampleApp.xcodeproj/IntegrationTests.xctestplan; sourceTree = "<group>"; };
 		845AA7DC29BB424800F33739 /* SmokeTests.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = SmokeTests.xctestplan; sourceTree = "<group>"; };
 		845B8D8B2934B36C0084A966 /* Account.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Account.swift; sourceTree = "<group>"; };
+		846E359E2C00654F00E63DF4 /* ConfigModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigModule.swift; sourceTree = "<group>"; };
+		846E35A12C0065AD00E63DF4 /* ConfigRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigRouter.swift; sourceTree = "<group>"; };
+		846E35A32C0065B600E63DF4 /* ConfigPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigPresenter.swift; sourceTree = "<group>"; };
+		846E35A52C0065C100E63DF4 /* ConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigView.swift; sourceTree = "<group>"; };
+		846E35A72C006C5600E63DF4 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		847BD1D12989492500076C90 /* MainViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
 		847BD1D32989492500076C90 /* MainModule.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainModule.swift; sourceTree = "<group>"; };
 		847BD1D42989492500076C90 /* MainPresenter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainPresenter.swift; sourceTree = "<group>"; };
@@ -409,7 +418,6 @@
 		847BD1E3298A806800076C90 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		847BD1EA298A87AB00076C90 /* SubscriptionsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionsViewModel.swift; sourceTree = "<group>"; };
 		847F08002A25DBFF00B2A5A4 /* XPlatformW3WTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPlatformW3WTests.swift; sourceTree = "<group>"; };
-		8486EDD02B4F2DC1008E53C3 /* AlertPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertPresenter.swift; sourceTree = "<group>"; };
 		8487A92E2A7BD2F30003D5AF /* XPlatformProtocolTests.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = XPlatformProtocolTests.xctestplan; path = ../XPlatformProtocolTests.xctestplan; sourceTree = "<group>"; };
 		8487A9472A83AD680003D5AF /* LoggingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggingService.swift; sourceTree = "<group>"; };
 		849A4F18298281E300E61ACE /* WalletAppRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WalletAppRelease.entitlements; sourceTree = "<group>"; };
@@ -428,7 +436,6 @@
 		84CE642A27981DF000142511 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		84CE642C27981DF000142511 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84CE6453279FFE1100142511 /* Wallet.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Wallet.entitlements; sourceTree = "<group>"; };
-		84CEC64528D89D6B00D081A8 /* PairingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingTests.swift; sourceTree = "<group>"; };
 		84D093EA2B4EA6CB005B1925 /* ActivityIndicatorManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityIndicatorManager.swift; sourceTree = "<group>"; };
 		84D72FC62B4692770057EAF3 /* DApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DApp.entitlements; sourceTree = "<group>"; };
 		84DB38F029828A7C00BFEE37 /* WalletApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WalletApp.entitlements; sourceTree = "<group>"; };
@@ -437,6 +444,7 @@
 		84E6B84729787A8000428BAF /* PNDecryptionService.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PNDecryptionService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		84E6B84929787A8000428BAF /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		84E6B84B29787A8000428BAF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		84F1CD392BBD414000D2A6E2 /* DAppRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DAppRelease.entitlements; sourceTree = "<group>"; };
 		84F568C1279582D200D0A289 /* Signer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Signer.swift; sourceTree = "<group>"; };
 		84F568C32795832A00D0A289 /* EthereumTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EthereumTransaction.swift; sourceTree = "<group>"; };
 		84FE684528ACDB4700C893FF /* RequestParams.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestParams.swift; sourceTree = "<group>"; };
@@ -459,7 +467,6 @@
 		A518A98529683FB60035247E /* Web3InboxModule.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Web3InboxModule.swift; sourceTree = "<group>"; };
 		A518A98629683FB60035247E /* Web3InboxRouter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Web3InboxRouter.swift; sourceTree = "<group>"; };
 		A518B31328E33A6500A2CE93 /* InputConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InputConfig.swift; sourceTree = "<group>"; };
-		A51AC0D828E436A3001BACF9 /* InputConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputConfig.swift; sourceTree = "<group>"; };
 		A51AC0DE28E4379F001BACF9 /* InputConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputConfig.swift; sourceTree = "<group>"; };
 		A5417BBD299BFC3E00B469F3 /* ImportAccount.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImportAccount.swift; sourceTree = "<group>"; };
 		A541959A2934BFEF0035AD19 /* CacaoSignerTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CacaoSignerTests.swift; sourceTree = "<group>"; };
@@ -646,7 +653,6 @@
 		C5BE021A2AF79B960064FC88 /* SessionAccountModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionAccountModule.swift; sourceTree = "<group>"; };
 		C5F32A2B2954814200A6476E /* ConnectionDetailsModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionDetailsModule.swift; sourceTree = "<group>"; };
 		C5F32A2D2954814A00A6476E /* ConnectionDetailsRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionDetailsRouter.swift; sourceTree = "<group>"; };
-		C5F32A2F2954816100A6476E /* ConnectionDetailsInteractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionDetailsInteractor.swift; sourceTree = "<group>"; };
 		C5F32A312954816C00A6476E /* ConnectionDetailsPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionDetailsPresenter.swift; sourceTree = "<group>"; };
 		C5F32A332954817600A6476E /* ConnectionDetailsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionDetailsView.swift; sourceTree = "<group>"; };
 		C5F32A352954FE3C00A6476E /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colors.xcassets; sourceTree = "<group>"; };
@@ -840,6 +846,17 @@
 			path = RelayIntegrationTests;
 			sourceTree = "<group>";
 		};
+		846E35A02C00655500E63DF4 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				846E359E2C00654F00E63DF4 /* ConfigModule.swift */,
+				846E35A52C0065C100E63DF4 /* ConfigView.swift */,
+				846E35A32C0065B600E63DF4 /* ConfigPresenter.swift */,
+				846E35A12C0065AD00E63DF4 /* ConfigRouter.swift */,
+			);
+			path = Configuration;
+			sourceTree = "<group>";
+		};
 		847BD1DB2989493F00076C90 /* Main */ = {
 			isa = PBXGroup;
 			children = (
@@ -941,25 +958,19 @@
 		84CE641D27981DED00142511 /* DApp */ = {
 			isa = PBXGroup;
 			children = (
+				84F1CD392BBD414000D2A6E2 /* DAppRelease.entitlements */,
 				84D72FC62B4692770057EAF3 /* DApp.entitlements */,
 				C5BE01E02AF692F80064FC88 /* ApplicationLayer */,
 				C5BE02202AF7DDE70064FC88 /* Modules */,
 				A5BB7FAB28B6AA7100707FC6 /* Common */,
 				84CE641E27981DED00142511 /* AppDelegate.swift */,
 				84CE642027981DED00142511 /* SceneDelegate.swift */,
+				846E35A72C006C5600E63DF4 /* Constants.swift */,
 				84CE642727981DF000142511 /* Assets.xcassets */,
 				84CE642927981DF000142511 /* LaunchScreen.storyboard */,
 				84CE642C27981DF000142511 /* Info.plist */,
 			);
 			path = DApp;
-			sourceTree = "<group>";
-		};
-		84CEC64728D8A98900D081A8 /* Pairing */ = {
-			isa = PBXGroup;
-			children = (
-				84CEC64528D89D6B00D081A8 /* PairingTests.swift */,
-			);
-			path = Pairing;
 			sourceTree = "<group>";
 		};
 		84D2A66728A4F5260088AE09 /* Auth */ = {
@@ -1356,6 +1367,8 @@
 				84CB43D429B9FC88004DDA31 /* Tests */,
 				A5629AEF2877F73000094373 /* DefaultSocketFactory.swift */,
 				A59CF4F5292F83D50031A42F /* DefaultSignerFactory.swift */,
+				A50B6A372B06697B00162B01 /* ProfilingService.swift */,
+				84AEC2502B4D42C100E27A5B /* AlertPresenter.swift */,
 				A5A0843B29D2F60A000B9B17 /* DefaultCryptoProvider.swift */,
 				A51606F72A2F47BD00CACB92 /* DefaultBIP44Provider.swift */,
 				A5417BBD299BFC3E00B469F3 /* ImportAccount.swift */,
@@ -1368,10 +1381,8 @@
 		A5BB7FAB28B6AA7100707FC6 /* Common */ = {
 			isa = PBXGroup;
 			children = (
-				A51AC0D828E436A3001BACF9 /* InputConfig.swift */,
 				A5BB7FAC28B6AA7D00707FC6 /* QRCodeGenerator.swift */,
 				84D093EA2B4EA6CB005B1925 /* ActivityIndicatorManager.swift */,
-				8486EDD02B4F2DC1008E53C3 /* AlertPresenter.swift */,
 			);
 			path = Common;
 			sourceTree = "<group>";
@@ -1434,7 +1445,6 @@
 			children = (
 				847F07FE2A25DBC700B2A5A4 /* XPlatform */,
 				849D7A91292E2115006A2BD4 /* Push */,
-				84CEC64728D8A98900D081A8 /* Pairing */,
 				A5E03E0A28646A8A00888481 /* Stubs */,
 				A5E03E0928646A8100888481 /* Sign */,
 				84D2A66728A4F5260088AE09 /* Auth */,
@@ -1606,7 +1616,6 @@
 				C56EE262293F56D6004840D1 /* Extensions */,
 				C56EE263293F56D6004840D1 /* VIPER */,
 				84AEC24E2B4D1EE400E27A5B /* ActivityIndicatorManager.swift */,
-				84AEC2502B4D42C100E27A5B /* AlertPresenter.swift */,
 			);
 			path = Common;
 			sourceTree = "<group>";
@@ -1664,7 +1673,6 @@
 				C56EE280293F5757004840D1 /* Application.swift */,
 				C56EE27F293F5757004840D1 /* AppDelegate.swift */,
 				C56EE281293F5757004840D1 /* SceneDelegate.swift */,
-				A50B6A372B06697B00162B01 /* ProfilingService.swift */,
 				84DB38F22983CDAE00BFEE37 /* PushRegisterer.swift */,
 				A51811972A52E21A00A52B15 /* ConfigurationService.swift */,
 				8487A9472A83AD680003D5AF /* LoggingService.swift */,
@@ -1785,6 +1793,7 @@
 			isa = PBXGroup;
 			children = (
 				C5B4C4C52AF12C2900B4274A /* Sign */,
+				846E35A02C00655500E63DF4 /* Configuration */,
 			);
 			path = Modules;
 			sourceTree = "<group>";
@@ -1794,7 +1803,6 @@
 			children = (
 				C5F32A2B2954814200A6476E /* ConnectionDetailsModule.swift */,
 				C5F32A2D2954814A00A6476E /* ConnectionDetailsRouter.swift */,
-				C5F32A2F2954816100A6476E /* ConnectionDetailsInteractor.swift */,
 				C5F32A312954816C00A6476E /* ConnectionDetailsPresenter.swift */,
 				C5F32A332954817600A6476E /* ConnectionDetailsView.swift */,
 			);
@@ -2224,6 +2232,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				84733CD52C1C2CEB001B2850 /* InputConfig.swift in Sources */,
+				84733CD42C1C2C24001B2850 /* ProfilingService.swift in Sources */,
+				84733CD32C1C2A4B001B2850 /* AlertPresenter.swift in Sources */,
 				C5BE021C2AF79B9A0064FC88 /* SessionAccountRouter.swift in Sources */,
 				C5B4C4C42AF11C8B00B4274A /* SignView.swift in Sources */,
 				C5BE02042AF7764F0064FC88 /* UIViewController.swift in Sources */,
@@ -2233,9 +2244,10 @@
 				84CE641F27981DED00142511 /* AppDelegate.swift in Sources */,
 				C5BE01E32AF696540064FC88 /* SceneViewController.swift in Sources */,
 				A5A8E47D293A1CFE00FEB97D /* DefaultSocketFactory.swift in Sources */,
+				846E35A22C0065AD00E63DF4 /* ConfigRouter.swift in Sources */,
+				846E359F2C00654F00E63DF4 /* ConfigModule.swift in Sources */,
 				C5BE01E52AF697470064FC88 /* Color.swift in Sources */,
 				A5BB7FAD28B6AA7D00707FC6 /* QRCodeGenerator.swift in Sources */,
-				A51AC0D928E436A3001BACF9 /* InputConfig.swift in Sources */,
 				C5BE01E22AF693080064FC88 /* Application.swift in Sources */,
 				C5BE021B2AF79B9A0064FC88 /* SessionAccountPresenter.swift in Sources */,
 				A5A8E47E293A1CFE00FEB97D /* DefaultSignerFactory.swift in Sources */,
@@ -2246,15 +2258,17 @@
 				C5BE02012AF774CB0064FC88 /* NewPairingModule.swift in Sources */,
 				C5BE02002AF774CB0064FC88 /* NewPairingRouter.swift in Sources */,
 				C5BE01F82AF6CB270064FC88 /* SignInteractor.swift in Sources */,
-				8486EDD12B4F2DC1008E53C3 /* AlertPresenter.swift in Sources */,
 				C5BE01D12AF661D70064FC88 /* NewPairingView.swift in Sources */,
+				846E35A42C0065B600E63DF4 /* ConfigPresenter.swift in Sources */,
 				84CE642127981DED00142511 /* SceneDelegate.swift in Sources */,
 				C5BE02022AF774CB0064FC88 /* NewPairingInteractor.swift in Sources */,
 				C5BE021D2AF79B9A0064FC88 /* SessionAccountInteractor.swift in Sources */,
 				A51606F82A2F47BD00CACB92 /* DefaultBIP44Provider.swift in Sources */,
+				846E35A62C0065C100E63DF4 /* ConfigView.swift in Sources */,
 				C5BE01FB2AF6CB270064FC88 /* SignRouter.swift in Sources */,
 				C5BE01F72AF6CB250064FC88 /* SignModule.swift in Sources */,
 				C5BE01FA2AF6CB270064FC88 /* SignPresenter.swift in Sources */,
+				846E35A82C006C5600E63DF4 /* Constants.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2368,7 +2382,6 @@
 			files = (
 				A51606F92A2F47BD00CACB92 /* DefaultBIP44Provider.swift in Sources */,
 				A5A0843E29D2F624000B9B17 /* DefaultCryptoProvider.swift in Sources */,
-				84CEC64628D89D6B00D081A8 /* PairingTests.swift in Sources */,
 				767DC83528997F8E00080FA9 /* EthSendTransaction.swift in Sources */,
 				8439CB89293F658E00F2F2E2 /* PushMessage.swift in Sources */,
 				A518B31428E33A6500A2CE93 /* InputConfig.swift in Sources */,
@@ -2517,7 +2530,6 @@
 				C55D34AF2965FB750004314A /* SessionProposalPresenter.swift in Sources */,
 				A5D610D22AB35B1100C20083 /* Listings.swift in Sources */,
 				A5B4F7C82ABB21190099AF7C /* CacheAsyncImage.swift in Sources */,
-				C5F32A302954816100A6476E /* ConnectionDetailsInteractor.swift in Sources */,
 				847BD1E8298A806800076C90 /* NotificationsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2623,7 +2635,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 173;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -2687,7 +2699,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 173;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -2716,7 +2728,7 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = W5R8AG9K22;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
@@ -2734,7 +2746,7 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = W5R8AG9K22;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
@@ -2756,7 +2768,7 @@
 				CODE_SIGN_ENTITLEMENTS = DApp/DApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = W5R8AG9K22;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DApp/Info.plist;
@@ -2789,10 +2801,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CODE_SIGN_ENTITLEMENTS = DApp/DApp.entitlements;
+				CODE_SIGN_ENTITLEMENTS = DApp/DAppRelease.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = W5R8AG9K22;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DApp/Info.plist;
@@ -2826,7 +2838,7 @@
 				CODE_SIGN_ENTITLEMENTS = PNDecryptionService/PNDecryptionService.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = W5R8AG9K22;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PNDecryptionService/Info.plist;
@@ -2856,7 +2868,7 @@
 				CODE_SIGN_ENTITLEMENTS = PNDecryptionService/PNDecryptionServiceRelease.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = W5R8AG9K22;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PNDecryptionService/Info.plist;
@@ -2888,7 +2900,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = W5R8AG9K22;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -2923,7 +2935,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = W5R8AG9K22;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -2955,7 +2967,7 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = W5R8AG9K22;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
@@ -2973,7 +2985,7 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = W5R8AG9K22;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
@@ -2991,7 +3003,7 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = W5R8AG9K22;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -3014,7 +3026,7 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = W5R8AG9K22;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
@@ -3036,7 +3048,7 @@
 				CODE_SIGN_ENTITLEMENTS = WalletApp/WalletApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = W5R8AG9K22;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -3072,7 +3084,7 @@
 				CODE_SIGN_ENTITLEMENTS = WalletApp/WalletAppRelease.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = W5R8AG9K22;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -3103,7 +3115,7 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = W5R8AG9K22;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
@@ -3121,7 +3133,7 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 173;
 				DEVELOPMENT_TEAM = W5R8AG9K22;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
@@ -3249,8 +3261,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/WalletConnect/web3modal-swift";
 			requirement = {
-				kind = revision;
-				revision = c73ce390bc249af155b7320346b7045e53b89866;
+				branch = "pairing-expiry";
+				kind = branch;
 			};
 		};
 		A5434021291E6A270068F706 /* XCRemoteSwiftPackageReference "solana-swift" */ = {

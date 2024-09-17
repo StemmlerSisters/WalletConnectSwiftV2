@@ -56,13 +56,25 @@ public struct RelayClientFactory {
             projectId: projectId,
             socketAuthenticator: socketAuthenticator
         )
+        let socket = socketFactory.create(with: relayUrlFactory.create())
+        socket.request.addValue(EnvironmentInfo.userAgent, forHTTPHeaderField: "User-Agent")
+        if let bundleId = Bundle.main.bundleIdentifier {
+            socket.request.addValue(bundleId, forHTTPHeaderField: "Origin")
+        }
+
+        var socketConnectionHandler: SocketConnectionHandler!
+        switch socketConnectionType {
+        case .automatic:    socketConnectionHandler = AutomaticSocketConnectionHandler(socket: socket, logger: logger)
+        case .manual:       socketConnectionHandler = ManualSocketConnectionHandler(socket: socket, logger: logger)
+        }
 
         let dispatcher = Dispatcher(
             socketFactory: socketFactory,
-            relayUrlFactory: relayUrlFactory, 
+            relayUrlFactory: relayUrlFactory,
             networkMonitor: networkMonitor,
-            socketConnectionType: socketConnectionType,
-            logger: logger
+            socket: socket,
+            logger: logger,
+            socketConnectionHandler: socketConnectionHandler
         )
 
         let rpcHistory = RPCHistoryFactory.createForRelay(keyValueStorage: keyValueStorage)
